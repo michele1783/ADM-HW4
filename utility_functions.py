@@ -26,8 +26,8 @@ def convert_mp3_to_wav(audio:str) -> str:
     
     return audio
 
-def plot_spectrogram_and_picks(track:np.ndarray, sr:int, peaks:np.ndarray, onset_env:np.ndarray) -> None:
-    """[summary]
+def plot_spectrogram_and_peaks(track:np.ndarray, sr:int, peaks:np.ndarray, onset_env:np.ndarray) -> None:
+    """Plots the spectrogram and peaks 
 
     Args:
         track (np.ndarray): A track.
@@ -53,20 +53,21 @@ def plot_spectrogram_and_picks(track:np.ndarray, sr:int, peaks:np.ndarray, onset
     plt.tight_layout()
     plt.show()
 
-def load_audio_picks(audio, duration, hop_size):
-    """[summary]
+def load_audio_peaks(audio, offset, duration, hop_size):
+    """Load the tracks and peaks of an audio.
 
     Args:
         audio (string, int, pathlib.Path or file-like object): [description]
-        duration (int): [description]
-        hop_size (int): 
+        offset (float): start reading after this time (in seconds)
+        duration (float): only load up to this much audio (in seconds)
+        hop_size (int): the hop_length
 
     Returns:
         tuple: Returns the audio time series (track) and sampling rate (sr), a vector containing the onset strength envelope
         (onset_env), and the indices of peaks in track (peaks).
     """
     try:
-        track, sr = librosa.load(audio, duration=duration)
+        track, sr = librosa.load(audio, offset=offset, duration=duration)
         onset_env = librosa.onset.onset_strength(track, sr=sr, hop_length=hop_size)
         peaks = librosa.util.peak_pick(onset_env, 10, 10, 10, 10, 0.5, 0.5)
     except Error as e:
