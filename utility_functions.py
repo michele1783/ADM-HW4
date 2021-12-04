@@ -72,6 +72,36 @@ def load_audio_peaks(audio, offset, duration, hop_size):
 
     return track, sr, onset_env, peaks
 
+def peaks_sparse(peaks):
+    ret = []
+    for peaks in tqdm(peaks):
+        peak_sparse = np.zeros(maxPeak+1)
+        for y in peaks:
+            peak_sparse[y] = 1
+        ret.append(peak_sparse)
+    return ret
+
+def get_signatures(n_perm, peaks_sparse):
+    signatures = []
+
+    for peaks in tqdm(peaks_sparse):
+        np.random.seed(1) #we start always with the same seed to get the same sequence of permutations
+        signature = np.array([])
+        for x in range(n_perm):
+            np.random.shuffle(peaks)
+            signature = np.append(signature, np.where(peaks == 1)[0][0])
+        signatures.append(signature)
+    return signatures
+
+#h(x) = (x*a + b) mod m
+def hash_function(x,a,b,m):
+    return sum((x*a + b)) % m
+
+def jaccard_similarity(sig1, sig2):
+    return len(np.intersect1d(sig1, sig2)) / len(np.union1d(sig1, sig2)) 
+    
+
+
 
 # We use this function to clean our dataset, in particular to fill the NaN values.
 def fill_nan(df):
@@ -214,6 +244,19 @@ def gap_stat(data, k):
     return(gaps.index(maxx) + 2)
 
     
-
+def algo(l, s):
+    
+    result = [] 
+    n = len(l)                                #length of the starting list
+    
+    for i in range(len(l)):                   #first loop starts from the beginning of the list and scan all the list
+        for j in range(i+1, len(l)):          #the second loop starts from the next number of the first loop
+            if(l[i]+l[j] == s):             #check the given sum 
+                result.append((l[i], l[j]))   #append the tuple in my final list 
+    
+    if len(result) == 0:                      #check if i have found at least one pair
+        return("There is not any pair that gives as result " + str(s))
+    else:
+        return result
 
         
