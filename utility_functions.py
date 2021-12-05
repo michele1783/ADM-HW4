@@ -5,7 +5,21 @@ import subprocess
 import librosa
 import librosa.display
 import IPython.display as ipd
+import pandas as pd
+import random as rd
+import math
+import time
+import sympy
+import os
 
+from collections import defaultdict
+from sklearn.decomposition import PCA
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn import preprocessing
+from pandas.api.types import is_string_dtype, is_numeric_dtype
+from numpy import linalg
+from yellowbrick.cluster import KElbowVisualizer
+from sklearn.cluster import KMeans
 from pathlib import Path, PurePath   
 from tqdm.notebook import tqdm
 
@@ -72,36 +86,43 @@ def load_audio_peaks(audio, offset, duration, hop_size):
 
     return track, sr, onset_env, peaks
 
-def peaks_sparse(peaks):
-    ret = []
+# Sparse the peaks for each song
+def peaks_sparse(peaks, onset_env):
+    one_hot_peaks = []
     for peaks in tqdm(peaks):
-        peak_sparse = np.zeros(maxPeak+1)
-        for y in peaks:
-            peak_sparse[y] = 1
-        ret.append(peak_sparse)
-    return ret
+        # Convert song peaks into one-hot vectors
+        # with length equals to onset_env
+        peak_sparse = np.zeros(len(onset_env))
+        for peak in peaks:
+            peak_sparse[peak] = 1
+        one_hot_peaks.append(peak_sparse)
+    return one_hot_peaks
 
 def get_signatures(n_perm, peaks_sparse):
+    # Initialize the matrix of signatures
     signatures = []
-
+    
     for peaks in tqdm(peaks_sparse):
-        np.random.seed(1) #we start always with the same seed to get the same sequence of permutations
+        # We start always with the same seed to get the same shuffling sequence
+        np.random.seed(1)
         signature = np.array([])
+        # Store at each permutation the index of the first peak signed with 1
         for x in range(n_perm):
             np.random.shuffle(peaks)
             signature = np.append(signature, np.where(peaks == 1)[0][0])
+        # Append each signature to the matrix of signatures
         signatures.append(signature)
+        
     return signatures
 
 #h(x) = (x*a + b) mod m
 def hash_function(x,a,b,m):
     return sum((x*a + b)) % m
 
+
 def jaccard_similarity(sig1, sig2):
     return len(np.intersect1d(sig1, sig2)) / len(np.union1d(sig1, sig2)) 
     
-
-
 
 # We use this function to clean our dataset, in particular to fill the NaN values.
 def fill_nan(df):
@@ -151,7 +172,7 @@ def K_Means(K, data):
     
     iterations = 0
     # Until the centroids don't change or the iterations are maximum n (the number of observation)
-    while iterations != 3 or np.array_equal(centroids, prev_centroids) == False:
+    while iterations != 20 or np.array_equal(centroids, prev_centroids) == False:
         # Saving the previous values of the cluster for the next while loop
         prev_centroids = centroids    
         euc_dis = np.zeros((n,K))      # Initialize the euclidean distance array
@@ -196,7 +217,7 @@ def elbow(data, k):
     
     for i in range(2,k): # The number of clusters analyzed goes from 2 to k
         # Run the implemented algorithm
-        euc_dis, dictionary = K_Means(i, data)
+        clusters, euc_dis, dictionary = K_Means(i, data)
         
         # Append the cost of the K-Means algorithm for each number of clusters
         #since we have to summation in the formula seen during lesson for the cost
@@ -218,6 +239,7 @@ def elbow(data, k):
     plt.show()
     
     return diff
+
 
 # Create new random reference set
 def gap_stat(data, k):
@@ -260,3 +282,24 @@ def algo(l, s):
         return result
 
         
+def new_algo(l, s):
+    d = {} # Initialize the dictionary
+    result = [] # Initialize the solution list
+    
+    # For each enumerated element
+    for i, el in enumerate(l):
+        
+        # Check if the sum minus the element is already in the dictionary
+        # Obviously, el_1 + (s - el_2) gives the sum, so it means we have found a pair
+        if s-el in d:
+            # Append the element found in the dictionary and the i-th element of l as a tuple
+            result.append((l[d.get(s-el)], l[i])) 
+        
+        # Update the dictionary with the new element
+        d[el] = i
+    
+    # Check if i have found at least one pair and print the results
+    if len(result) == 0:                      
+        return("There is not any pair that gives as result " + str(s))
+    else:
+        return result
