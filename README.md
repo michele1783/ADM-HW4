@@ -5,7 +5,7 @@ In this project we have played with a dataset gathering songs from the Internati
 
 - `utils_functions`: is a file.py we have written all our functions implemented from scratch to achieve all the goals of **Homework 4 - Hard coding**.
 
-- `homeworkpca`: is a jupyter notebook where we show all requested tables, plots and comments. 
+- `homework`: is a jupyter notebook where we show all requested tables, plots and comments. 
 
  ## Group Members [Group 18]
  Davide Cacciatore - GitHub: [DavideCacciatore](https://github.com/DavideCacciatore)
