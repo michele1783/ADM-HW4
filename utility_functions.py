@@ -249,8 +249,8 @@ def gap_stat(data, k):
     cost_r = []
     gaps = [] 
     for i in range(2,k):
-        euc_dis_r, dictionary_r = K_Means(i, randomReference)
-        euc_dis, dictionary = K_Means(i, data)
+        clusters, euc_dis, dictionary = K_Means(i, randomReference)
+        clusters_r, euc_dis_r, dictionary_r = K_Means(i, data)
         cost_ = sum(euc_dis.min(axis=1)**2)
         cost.append(cost_)
         cost_r_ = sum(euc_dis_r.min(axis=1)**2)
